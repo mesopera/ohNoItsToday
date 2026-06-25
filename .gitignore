@@ -1,0 +1,24 @@
+# Personal config and data — NEVER commit
+config.yaml
+data/
+
+# Python
+*.pyc
+__pycache__/
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# PyInstaller spec (auto-generated, not needed in VCS)
+*.spec

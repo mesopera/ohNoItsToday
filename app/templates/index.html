@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Brief</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <!-- ── Loading State ─────────────────────────────────────── -->
+  <div id="loader">
+    <div id="loader-lines"></div>
+    <span class="cursor">█</span>
+  </div>
+
+  <!-- ── Dashboard Content ─────────────────────────────────── -->
+  <div id="content" style="display:none">
+    <div class="container">
+
+      <!-- Header -->
+      <header class="header">
+        <span class="header-title">Daily Brief</span>
+        <div class="header-right">
+          <span id="header-date" class="header-date"></span>
+          <span id="clock" class="header-clock"></span>
+          <span class="cursor">█</span>
+        </div>
+      </header>
+      <hr class="header-rule">
+
+      <!-- News -->
+      <section class="section">
+        <h2 class="section-heading">News</h2>
+        <div id="news-list"></div>
+      </section>
+
+      <!-- Weather -->
+      <section class="section">
+        <h2 class="section-heading">Weather</h2>
+        <div id="weather-content"></div>
+      </section>
+
+      <!-- Quote -->
+      <section class="section">
+        <h2 class="section-heading">Quote</h2>
+        <div id="quote-content"></div>
+      </section>
+
+      <!-- Watch -->
+      <section class="section">
+        <h2 class="section-heading">Watch</h2>
+        <div id="movies-content"></div>
+      </section>
+
+      <!-- Puzzles -->
+      <section class="section">
+        <h2 class="section-heading">Puzzles</h2>
+        <div id="puzzles-content"></div>
+      </section>
+
+      <!-- Side Quest -->
+      <section class="section">
+        <h2 class="section-heading">Side Quest</h2>
+        <div id="quest-content"></div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <button onclick="toggleHistory()" class="footer-link">archive</button>
+        <span class="footer-sep">·</span>
+        <a href="/settings" class="footer-link">settings</a>
+        <span class="footer-sep">·</span>
+        <button onclick="forceRefresh()" class="footer-link">refresh</button>
+        <span id="footer-generated" class="footer-generated"></span>
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- ── History Panel ──────────────────────────────────────── -->
+  <div id="history-panel" class="history-panel hidden">
+    <div class="container">
+      <div class="history-header">
+        <h2 class="section-heading" style="margin-bottom:0;border-bottom:none">Archive</h2>
+        <button onclick="toggleHistory()" class="footer-link">close ✕</button>
+      </div>
+      <div id="history-list"></div>
+      <div id="history-detail"></div>
+    </div>
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>

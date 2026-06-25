@@ -1,0 +1,44 @@
+groq:
+  api_key: ""
+  model: "llama-3.3-70b-versatile"
+  # Available free models: llama-3.3-70b-versatile, llama-3.1-8b-instant
+
+location:
+  city: "Your City"
+  country: "Your Country"
+  # lat/lon are auto-resolved from city+country on first run and cached in data/geo_cache.json
+  # Override manually if geocoding picks the wrong city:
+  # lat: 18.5204
+  # lon: 73.8567
+
+letterboxd:
+  username: ""
+
+news:
+  max_important: 7
+  max_funny: 2
+  rss_sources:
+    international:
+      - url: "https://feeds.bbci.co.uk/news/world/rss.xml"
+        name: "BBC World"
+      - url: "https://feeds.reuters.com/reuters/worldNews"
+        name: "Reuters World"
+      - url: "https://rss.nytimes.com/services/xml/rss/nyt/World.xml"
+        name: "NYT World"
+    national:
+      - url: "https://timesofindia.indiatimes.com/rss.cms"
+        name: "Times of India"
+      - url: "https://www.thehindu.com/news/national/feeder/default.rss"
+        name: "The Hindu"
+      - url: "https://feeds.feedburner.com/ndtvnews-india-news"
+        name: "NDTV India"
+    local:
+      - url: "https://timesofindia.indiatimes.com/city/pune/rss.cms"
+        name: "TOI Pune"
+    funny:
+      - url: "https://www.reddit.com/r/nottheonion/.rss"
+        name: "Not The Onion"
+
+app:
+  port: 5000
+  day_boundary_hour: 6

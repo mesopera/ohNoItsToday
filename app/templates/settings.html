@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Brief — Settings</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="container">
+
+    <!-- Header -->
+    <header class="header">
+      <span class="header-title">Daily Brief</span>
+      <a href="/" class="footer-link" style="font-size:12px">← back</a>
+    </header>
+    <hr class="header-rule">
+
+    <h2 class="section-heading">Settings</h2>
+
+    {% if not config %}
+    <p class="loader-line" style="margin-bottom:28px;color:var(--accent)">
+      > no configuration found. fill in the essentials below to get started.
+    </p>
+    {% endif %}
+
+    <form id="settings-form" onsubmit="return false">
+
+      <!-- ── Groq ─────────────────────────────────────────── -->
+      <h3 class="settings-section-title">Groq API</h3>
+
+      <div class="settings-field">
+        <label class="settings-label" for="groq_api_key">API Key</label>
+        <input
+          id="groq_api_key" name="groq_api_key"
+          type="password" class="settings-input"
+          value="{{ config.groq.api_key if config and config.groq else '' }}"
+          placeholder="gsk_...">
+        <p class="settings-hint">Get a free key at console.groq.com</p>
+      </div>
+
+      <div class="settings-field">
+        <label class="settings-label" for="groq_model">Model</label>
+        <select id="groq_model" name="groq_model" class="settings-input" style="width:auto">
+          {% set m = config.groq.model if config and config.groq else 'llama-3.3-70b-versatile' %}
+          <option value="llama-3.3-70b-versatile"
+            {{ 'selected' if m == 'llama-3.3-70b-versatile' }}>
+            llama-3.3-70b-versatile (recommended)
+          </option>
+          <option value="llama-3.1-8b-instant"
+            {{ 'selected' if m == 'llama-3.1-8b-instant' }}>
+            llama-3.1-8b-instant (faster, lighter)
+          </option>
+        </select>
+      </div>
+
+      <!-- ── Location ──────────────────────────────────────── -->
+      <h3 class="settings-section-title">Location</h3>
+
+      <div class="settings-field">
+        <label class="settings-label" for="loc_city">City</label>
+        <input
+          id="loc_city" name="loc_city"
+          type="text" class="settings-input" style="width:260px"
+          value="{{ config.location.city if config and config.location else '' }}"
+          placeholder="Pune">
+      </div>
+
+      <div class="settings-field">
+        <label class="settings-label" for="loc_country">Country</label>
+        <input
+          id="loc_country" name="loc_country"
+          type="text" class="settings-input" style="width:260px"
+          value="{{ config.location.country if config and config.location else '' }}"
+          placeholder="India">
+        <p class="settings-hint">Used for geocoding (weather). Coordinates are cached after the first run.</p>
+      </div>
+
+      <!-- ── Letterboxd ─────────────────────────────────────── -->
+      <h3 class="settings-section-title">Letterboxd</h3>
+
+      <div class="settings-field">
+        <label class="settings-label" for="lb_username">Username</label>
+        <input
+          id="lb_username" name="lb_username"
+          type="text" class="settings-input" style="width:260px"
+          value="{{ config.letterboxd.username if config and config.letterboxd else '' }}"
+          placeholder="your_username">
+        <p class="settings-hint">Leave blank to skip movie &amp; TV recommendations.</p>
+      </div>
+
+      <!-- ── App ───────────────────────────────────────────── -->
+      <h3 class="settings-section-title">App</h3>
+
+      <div class="settings-field">
+        <label class="settings-label" for="app_port">Port</label>
+        <input
+          id="app_port" name="app_port"
+          type="number" class="settings-input"
+          value="{{ config.app.port if config and config.app else 5000 }}">
+        <p class="settings-hint">Change only if port 5000 is in use. Requires app restart.</p>
+      </div>
+
+      <div class="settings-field">
+        <label class="settings-label" for="app_boundary">Day Boundary Hour</label>
+        <input
+          id="app_boundary" name="app_boundary"
+          type="number" class="settings-input"
+          min="0" max="23"
+          value="{{ config.app.day_boundary_hour if config and config.app else 6 }}">
+        <p class="settings-hint">
+          "New day" starts at this hour. Before it, you still see yesterday's brief.
+          Default: 6 (6:00 AM).
+        </p>
+      </div>
+
+      <!-- ── Advanced: News Sources ────────────────────────── -->
+      <button type="button" class="advanced-toggle" onclick="toggleAdvanced()">
+        ▸ advanced — news sources
+      </button>
+
+      <div id="advanced-body" class="advanced-body">
+
+        {% set sources = config.news.rss_sources if config and config.news else {} %}
+
+        {% for category in ['international', 'national', 'local', 'funny'] %}
+        <div class="settings-field">
+          <label class="settings-label" for="rss_{{ category }}">
+            {{ category }} feeds
+          </label>
+          <textarea
+            id="rss_{{ category }}" name="rss_{{ category }}"
+            class="settings-input" rows="4">{% if sources.get(category) %}{% for feed in sources[category] %}{{ feed.url }}
+{% endfor %}{% endif %}</textarea>
+          <p class="settings-hint">One RSS URL per line.</p>
+        </div>
+        {% endfor %}
+
+      </div>
+
+      <!-- ── Actions ───────────────────────────────────────── -->
+      <div class="settings-actions">
+        <button type="button" class="btn-primary" onclick="saveSettings()">save settings</button>
+        <button type="button" class="btn-secondary" onclick="forceRefreshAndGo()">
+          force refresh &amp; reload
+        </button>
+        <span id="save-confirm" class="save-confirm"></span>
+      </div>
+
+    </form>
+  </div><!-- /container -->
+
+  <script>
+    function toggleAdvanced() {
+      const body = document.getElementById('advanced-body');
+      const btn  = document.querySelector('.advanced-toggle');
+      body.classList.toggle('open');
+      btn.textContent = body.classList.contains('open')
+        ? '▾ advanced — news sources'
+        : '▸ advanced — news sources';
+    }
+
+    function buildRssSources() {
+      const cats = ['international', 'national', 'local', 'funny'];
+      const sources = {};
+      for (const cat of cats) {
+        const ta = document.getElementById(`rss_${cat}`);
+        if (!ta) continue;
+        const urls = ta.value.split('\n')
+          .map(u => u.trim())
+          .filter(u => u.startsWith('http'));
+        if (urls.length) {
+          try {
+            sources[cat] = urls.map(url => ({ url, name: new URL(url).hostname }));
+          } catch (_) {
+            sources[cat] = urls.map(url => ({ url, name: url }));
+          }
+        }
+      }
+      return sources;
+    }
+
+    async function saveSettings() {
+      const f = document.getElementById('settings-form');
+      const config = {
+        groq: {
+          api_key: f.groq_api_key.value.trim(),
+          model:   f.groq_model.value,
+        },
+        location: {
+          city:    f.loc_city.value.trim(),
+          country: f.loc_country.value.trim(),
+        },
+        letterboxd: {
+          username: f.lb_username.value.trim(),
+        },
+        app: {
+          port:               parseInt(f.app_port.value)     || 5000,
+          day_boundary_hour:  parseInt(f.app_boundary.value) || 6,
+        },
+        news: {
+          max_important: 7,
+          max_funny:     2,
+          rss_sources:   buildRssSources(),
+        },
+      };
+
+      const resp = await fetch('/api/settings', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(config),
+      });
+
+      const confirm = document.getElementById('save-confirm');
+      if (resp.ok) {
+        confirm.textContent = '> saved.';
+        confirm.style.color = 'var(--accent-done)';
+        confirm.style.display = 'inline';
+        setTimeout(() => confirm.style.display = 'none', 3000);
+      } else {
+        confirm.textContent = '> error saving.';
+        confirm.style.color = '#c87878';
+        confirm.style.display = 'inline';
+      }
+    }
+
+    async function forceRefreshAndGo() {
+      await fetch('/api/refresh', { method: 'POST' });
+      window.location.href = '/';
+    }
+  </script>
+</body>
+</html>
