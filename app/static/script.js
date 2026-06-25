@@ -1,5 +1,33 @@
 'use strict';
 
+// ── Theme ─────────────────────────────────────────────────────────────────────
+const VALID_THEMES = ['default', 'hacker', 'newspaper', 'magic', 'monochrome'];
+
+function applyTheme(name) {
+    if (!VALID_THEMES.includes(name)) name = 'default';
+    document.documentElement.setAttribute('data-theme', name);
+    localStorage.setItem('theme', name);
+}
+
+function loadTheme() {
+    applyTheme(localStorage.getItem('theme') || 'default');
+}
+
+loadTheme();
+
+// ── Window Controls ───────────────────────────────────────────────────────────
+function minimizeWindow() {
+    if (window.pywebview && window.pywebview.api) {
+        window.pywebview.api.minimize_window();
+    }
+}
+
+function closeWindow() {
+    if (window.pywebview && window.pywebview.api) {
+        window.pywebview.api.close_window();
+    }
+}
+
 // ── Clock ────────────────────────────────────────────────────────────────────
 function updateClock() {
     const now = new Date();
@@ -23,7 +51,7 @@ updateHeaderDate();
 
 // ── Loader ────────────────────────────────────────────────────────────────────
 const LOADING_MESSAGES = [
-    '> initializing daily brief...',
+    '> oh no. it\'s today.',
     '> fetching news feeds...',
     '> consulting the oracle...',
     '> reading the skies...',
@@ -32,7 +60,7 @@ const LOADING_MESSAGES = [
     '> shuffling crossword tiles...',
     '> playing games or smtg...',
     '> rolling for side quest...',
-    '> assembling the brief...',
+    '> assembling today\'s brief...',
 ];
 
 let _lineIndex = 0;
@@ -78,7 +106,7 @@ fetch('/api/data')
             if (_loaderLines) {
                 const e = document.createElement('div');
                 e.className = 'loader-line';
-                e.style.color = '#c87878';
+                e.style.color = 'var(--accent-error)';
                 e.textContent = `> error: ${err.message || JSON.stringify(err)}`;
                 _loaderLines.appendChild(e);
             }
@@ -95,7 +123,7 @@ function renderDashboard(data) {
     renderQuest(data.sidequest || {});
     renderFooter(data.generated_at);
     if (data.errors && Object.keys(data.errors).length > 0) {
-        console.warn('[brief] module errors:', data.errors);
+        console.warn('[ohNoItsToday] module errors:', data.errors);
     }
 }
 

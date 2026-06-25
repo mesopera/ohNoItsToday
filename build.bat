@@ -1,7 +1,7 @@
 @echo off
 cd /d "%~dp0"
 echo ============================================
-echo  Daily Brief — Building standalone .exe
+echo  Oh No It's Today — Building standalone .exe
 echo ============================================
 echo.
 
@@ -9,7 +9,7 @@ REM --onedir is preferred over --onefile for pywebview (avoids WebView2 extracti
 pyinstaller ^
     --onedir ^
     --windowed ^
-    --name "DailyBrief" ^
+    --name "OhNoItsToday" ^
     --add-data "app\templates;app\templates" ^
     --add-data "app\static;app\static" ^
     --hidden-import "engineio.async_drivers.threading" ^
@@ -18,9 +18,9 @@ pyinstaller ^
 
 echo.
 echo Build complete.
-echo Executable: dist\DailyBrief\DailyBrief.exe
+echo Executable: dist\OhNoItsToday\OhNoItsToday.exe
 echo.
-echo To distribute: zip the entire dist\DailyBrief\ folder.
+echo To distribute: zip the entire dist\OhNoItsToday\ folder.
 echo The recipient needs no Python installed — WebView2 is pre-installed on Windows 10/11.
 echo.
 pause

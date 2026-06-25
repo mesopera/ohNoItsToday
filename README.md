@@ -1,4 +1,4 @@
-# Daily Brief — Desktop App
+# Oh No It's Today — Desktop App
 
 A personal morning dashboard. Runs as a native desktop window (no browser).
 Powered by Groq LLM, Open-Meteo, Letterboxd RSS, and your local news feeds.
@@ -21,8 +21,8 @@ Opens a dark, minimal window every morning with:
 
 ### 1. Clone / download the project
 ```
-git clone <your-repo> daily-brief
-cd daily-brief
+git clone <your-repo> ohNoItsToday
+cd ohNoItsToday
 ```
 
 ### 2. Create a virtual environment
@@ -56,20 +56,20 @@ pythonw run.py         # no console window (Windows only)
 start.bat              # double-click shortcut (Windows, no console)
 ```
 
-The app opens a native window. No browser tab. No terminal needed after launch.
+The app opens a native frameless window with a custom titlebar. No browser tab. No terminal needed after launch.
 
 ---
 
 ## Building a standalone .exe (Windows)
 
-Packages everything into `dist\DailyBrief\DailyBrief.exe`.
+Packages everything into `dist\OhNoItsToday\OhNoItsToday.exe`.
 No Python installation required on the target machine.
 
 ```
 build.bat
 ```
 
-Distribute by zipping the entire `dist\DailyBrief\` folder.
+Distribute by zipping the entire `dist\OhNoItsToday\` folder.
 
 ---
 
@@ -79,15 +79,19 @@ Click **settings** in the footer, or go to `http://localhost:5000/settings` in a
 
 You can also edit `config.yaml` directly and restart the app.
 
----
+### Themes
 
-## Frameless window mode
+Five themes are available in **Settings → Appearance**:
 
-For a cleaner look with no OS titlebar, open `run.py` and change:
-```python
-frameless=False,   →   frameless=True,
-```
-Then add window-control buttons to `index.html` that call `pywebview.api.minimize_window()` and `pywebview.api.close_window()`.
+| Theme | Vibe |
+|-------|------|
+| **Default** | Warm dark minimal (JetBrains Mono + Lora) |
+| **Hacker** | Matrix green terminal, 1999 basement |
+| **Newspaper** | Aged newsprint broadsheet |
+| **Magic** | Hand-drawn star chart, purple ink |
+| **Monochrome** | Pure black & white photocopier zine |
+
+Theme choice is saved in your browser's local storage and persists across sessions.
 
 ---
 

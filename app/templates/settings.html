@@ -3,23 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Daily Brief — Settings</title>
+  <title>Oh No It's Today — Settings</title>
+  <script>
+    (function () {
+      var t = localStorage.getItem('theme') || 'default';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Raleway:wght@300;400;500&family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+
+  <!-- ── Custom Titlebar ───────────────────────────────────── -->
+  <div class="titlebar">
+    <div class="titlebar-drag">
+      <span class="titlebar-app">Oh No It's Today</span>
+    </div>
+    <div class="titlebar-controls">
+      <button type="button" class="titlebar-btn" onclick="minimizeWindow()" title="Minimize">─</button>
+      <button type="button" class="titlebar-btn titlebar-btn-close" onclick="closeWindow()" title="Close">✕</button>
+    </div>
+  </div>
+
   <div class="container">
 
-    <!-- Header -->
     <header class="header">
-      <span class="header-title">Daily Brief</span>
+      <span class="header-title">Oh No It's Today</span>
       <a href="/" class="footer-link" style="font-size:12px">← back</a>
     </header>
     <hr class="header-rule">
 
-    <h2 class="section-heading">Settings</h2>
+    <h2 class="settings-page-heading">Settings</h2>
 
     {% if not config %}
     <p class="loader-line" style="margin-bottom:28px;color:var(--accent)">
@@ -29,116 +46,209 @@
 
     <form id="settings-form" onsubmit="return false">
 
-      <!-- ── Groq ─────────────────────────────────────────── -->
-      <h3 class="settings-section-title">Groq API</h3>
-
-      <div class="settings-field">
-        <label class="settings-label" for="groq_api_key">API Key</label>
-        <input
-          id="groq_api_key" name="groq_api_key"
-          type="password" class="settings-input"
-          value="{{ config.groq.api_key if config and config.groq else '' }}"
-          placeholder="gsk_...">
-        <p class="settings-hint">Get a free key at console.groq.com</p>
+      <!-- ── Appearance (always visible) ─────────────────── -->
+      <div class="settings-group settings-group-always open">
+        <button type="button" class="settings-toggle" disabled style="cursor:default;opacity:1">
+          Appearance
+        </button>
+        <div class="settings-section-body">
+          <div class="settings-field">
+            <label class="settings-label">Theme</label>
+            <div class="theme-picker" id="theme-picker">
+              <label class="theme-option">
+                <input type="radio" name="theme" value="default" onchange="applyTheme(this.value)">
+                <div class="theme-card">
+                  <span class="theme-name">Default</span>
+                  <div class="theme-swatches">
+                    <span class="theme-swatch" style="background:#0a0a0a"></span>
+                    <span class="theme-swatch" style="background:#f0ebe0"></span>
+                    <span class="theme-swatch" style="background:#c8a97e"></span>
+                  </div>
+                </div>
+              </label>
+              <label class="theme-option">
+                <input type="radio" name="theme" value="hacker" onchange="applyTheme(this.value)">
+                <div class="theme-card">
+                  <span class="theme-name">Hacker</span>
+                  <div class="theme-swatches">
+                    <span class="theme-swatch" style="background:#050505"></span>
+                    <span class="theme-swatch" style="background:#00ff41"></span>
+                    <span class="theme-swatch" style="background:#39ff14"></span>
+                  </div>
+                </div>
+              </label>
+              <label class="theme-option">
+                <input type="radio" name="theme" value="newspaper" onchange="applyTheme(this.value)">
+                <div class="theme-card">
+                  <span class="theme-name">Newspaper</span>
+                  <div class="theme-swatches">
+                    <span class="theme-swatch" style="background:#f0e8d0"></span>
+                    <span class="theme-swatch" style="background:#1a1208"></span>
+                    <span class="theme-swatch" style="background:#8b0000"></span>
+                  </div>
+                </div>
+              </label>
+              <label class="theme-option">
+                <input type="radio" name="theme" value="magic" onchange="applyTheme(this.value)">
+                <div class="theme-card">
+                  <span class="theme-name">Magic</span>
+                  <div class="theme-swatches">
+                    <span class="theme-swatch" style="background:#08060f"></span>
+                    <span class="theme-swatch" style="background:#dcd4f0"></span>
+                    <span class="theme-swatch" style="background:#a07ee0"></span>
+                  </div>
+                </div>
+              </label>
+              <label class="theme-option">
+                <input type="radio" name="theme" value="monochrome" onchange="applyTheme(this.value)">
+                <div class="theme-card">
+                  <span class="theme-name">Monochrome</span>
+                  <div class="theme-swatches">
+                    <span class="theme-swatch" style="background:#000000"></span>
+                    <span class="theme-swatch" style="background:#ffffff"></span>
+                    <span class="theme-swatch" style="background:#606060"></span>
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="settings-field">
-        <label class="settings-label" for="groq_model">Model</label>
-        <select id="groq_model" name="groq_model" class="settings-input" style="width:auto">
-          {% set m = config.groq.model if config and config.groq else 'llama-3.3-70b-versatile' %}
-          <option value="llama-3.3-70b-versatile"
-            {{ 'selected' if m == 'llama-3.3-70b-versatile' }}>
-            llama-3.3-70b-versatile (recommended)
-          </option>
-          <option value="llama-3.1-8b-instant"
-            {{ 'selected' if m == 'llama-3.1-8b-instant' }}>
-            llama-3.1-8b-instant (faster, lighter)
-          </option>
-        </select>
+      <!-- ── Groq API ─────────────────────────────────────── -->
+      <div class="settings-group open" data-group="groq">
+        <button type="button" class="settings-toggle" onclick="toggleSettingsGroup(this)">
+          Groq API
+          <span class="settings-toggle-icon">▸</span>
+        </button>
+        <div class="settings-section-body">
+          <div class="settings-field">
+            <label class="settings-label" for="groq_api_key">API Key</label>
+            <input
+              id="groq_api_key" name="groq_api_key"
+              type="password" class="settings-input"
+              value="{{ config.groq.api_key if config and config.groq else '' }}"
+              placeholder="gsk_...">
+            <p class="settings-hint">Get a free key at console.groq.com</p>
+          </div>
+
+          <div class="settings-field">
+            <label class="settings-label" for="groq_model">Model</label>
+            <select id="groq_model" name="groq_model" class="settings-input" style="width:auto">
+              {% set m = config.groq.model if config and config.groq else 'llama-3.3-70b-versatile' %}
+              <option value="llama-3.3-70b-versatile"
+                {{ 'selected' if m == 'llama-3.3-70b-versatile' }}>
+                llama-3.3-70b-versatile (recommended)
+              </option>
+              <option value="llama-3.1-8b-instant"
+                {{ 'selected' if m == 'llama-3.1-8b-instant' }}>
+                llama-3.1-8b-instant (faster, lighter)
+              </option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <!-- ── Location ──────────────────────────────────────── -->
-      <h3 class="settings-section-title">Location</h3>
+      <div class="settings-group" data-group="location">
+        <button type="button" class="settings-toggle" onclick="toggleSettingsGroup(this)">
+          Location
+          <span class="settings-toggle-icon">▸</span>
+        </button>
+        <div class="settings-section-body">
+          <div class="settings-field">
+            <label class="settings-label" for="loc_city">City</label>
+            <input
+              id="loc_city" name="loc_city"
+              type="text" class="settings-input" style="width:260px"
+              value="{{ config.location.city if config and config.location else '' }}"
+              placeholder="Pune">
+          </div>
 
-      <div class="settings-field">
-        <label class="settings-label" for="loc_city">City</label>
-        <input
-          id="loc_city" name="loc_city"
-          type="text" class="settings-input" style="width:260px"
-          value="{{ config.location.city if config and config.location else '' }}"
-          placeholder="Pune">
-      </div>
-
-      <div class="settings-field">
-        <label class="settings-label" for="loc_country">Country</label>
-        <input
-          id="loc_country" name="loc_country"
-          type="text" class="settings-input" style="width:260px"
-          value="{{ config.location.country if config and config.location else '' }}"
-          placeholder="India">
-        <p class="settings-hint">Used for geocoding (weather). Coordinates are cached after the first run.</p>
+          <div class="settings-field">
+            <label class="settings-label" for="loc_country">Country</label>
+            <input
+              id="loc_country" name="loc_country"
+              type="text" class="settings-input" style="width:260px"
+              value="{{ config.location.country if config and config.location else '' }}"
+              placeholder="India">
+            <p class="settings-hint">Used for geocoding (weather). Coordinates are cached after the first run.</p>
+          </div>
+        </div>
       </div>
 
       <!-- ── Letterboxd ─────────────────────────────────────── -->
-      <h3 class="settings-section-title">Letterboxd</h3>
-
-      <div class="settings-field">
-        <label class="settings-label" for="lb_username">Username</label>
-        <input
-          id="lb_username" name="lb_username"
-          type="text" class="settings-input" style="width:260px"
-          value="{{ config.letterboxd.username if config and config.letterboxd else '' }}"
-          placeholder="your_username">
-        <p class="settings-hint">Leave blank to skip movie &amp; TV recommendations.</p>
+      <div class="settings-group" data-group="letterboxd">
+        <button type="button" class="settings-toggle" onclick="toggleSettingsGroup(this)">
+          Letterboxd
+          <span class="settings-toggle-icon">▸</span>
+        </button>
+        <div class="settings-section-body">
+          <div class="settings-field">
+            <label class="settings-label" for="lb_username">Username</label>
+            <input
+              id="lb_username" name="lb_username"
+              type="text" class="settings-input" style="width:260px"
+              value="{{ config.letterboxd.username if config and config.letterboxd else '' }}"
+              placeholder="your_username">
+            <p class="settings-hint">Leave blank to skip movie &amp; TV recommendations.</p>
+          </div>
+        </div>
       </div>
 
       <!-- ── App ───────────────────────────────────────────── -->
-      <h3 class="settings-section-title">App</h3>
+      <div class="settings-group" data-group="app">
+        <button type="button" class="settings-toggle" onclick="toggleSettingsGroup(this)">
+          App
+          <span class="settings-toggle-icon">▸</span>
+        </button>
+        <div class="settings-section-body">
+          <div class="settings-field">
+            <label class="settings-label" for="app_port">Port</label>
+            <input
+              id="app_port" name="app_port"
+              type="number" class="settings-input"
+              value="{{ config.app.port if config and config.app else 5000 }}">
+            <p class="settings-hint">Change only if port 5000 is in use. Requires app restart.</p>
+          </div>
 
-      <div class="settings-field">
-        <label class="settings-label" for="app_port">Port</label>
-        <input
-          id="app_port" name="app_port"
-          type="number" class="settings-input"
-          value="{{ config.app.port if config and config.app else 5000 }}">
-        <p class="settings-hint">Change only if port 5000 is in use. Requires app restart.</p>
-      </div>
-
-      <div class="settings-field">
-        <label class="settings-label" for="app_boundary">Day Boundary Hour</label>
-        <input
-          id="app_boundary" name="app_boundary"
-          type="number" class="settings-input"
-          min="0" max="23"
-          value="{{ config.app.day_boundary_hour if config and config.app else 6 }}">
-        <p class="settings-hint">
-          "New day" starts at this hour. Before it, you still see yesterday's brief.
-          Default: 6 (6:00 AM).
-        </p>
-      </div>
-
-      <!-- ── Advanced: News Sources ────────────────────────── -->
-      <button type="button" class="advanced-toggle" onclick="toggleAdvanced()">
-        ▸ advanced — news sources
-      </button>
-
-      <div id="advanced-body" class="advanced-body">
-
-        {% set sources = config.news.rss_sources if config and config.news else {} %}
-
-        {% for category in ['international', 'national', 'local', 'funny'] %}
-        <div class="settings-field">
-          <label class="settings-label" for="rss_{{ category }}">
-            {{ category }} feeds
-          </label>
-          <textarea
-            id="rss_{{ category }}" name="rss_{{ category }}"
-            class="settings-input" rows="4">{% if sources.get(category) %}{% for feed in sources[category] %}{{ feed.url }}
-{% endfor %}{% endif %}</textarea>
-          <p class="settings-hint">One RSS URL per line.</p>
+          <div class="settings-field">
+            <label class="settings-label" for="app_boundary">Day Boundary Hour</label>
+            <input
+              id="app_boundary" name="app_boundary"
+              type="number" class="settings-input"
+              min="0" max="23"
+              value="{{ config.app.day_boundary_hour if config and config.app else 6 }}">
+            <p class="settings-hint">
+              "New day" starts at this hour. Before it, you still see yesterday's brief.
+              Default: 6 (6:00 AM).
+            </p>
+          </div>
         </div>
-        {% endfor %}
+      </div>
 
+      <!-- ── News Sources ──────────────────────────────────── -->
+      <div class="settings-group" data-group="news">
+        <button type="button" class="settings-toggle" onclick="toggleSettingsGroup(this)">
+          News Sources
+          <span class="settings-toggle-icon">▸</span>
+        </button>
+        <div class="settings-section-body">
+          {% set sources = config.news.rss_sources if config and config.news else {} %}
+
+          {% for category in ['international', 'national', 'local', 'funny'] %}
+          <div class="settings-field">
+            <label class="settings-label" for="rss_{{ category }}">
+              {{ category }} feeds
+            </label>
+            <textarea
+              id="rss_{{ category }}" name="rss_{{ category }}"
+              class="settings-input" rows="4">{% if sources.get(category) %}{% for feed in sources[category] %}{{ feed.url }}
+{% endfor %}{% endif %}</textarea>
+            <p class="settings-hint">One RSS URL per line.</p>
+          </div>
+          {% endfor %}
+        </div>
       </div>
 
       <!-- ── Actions ───────────────────────────────────────── -->
@@ -151,17 +261,21 @@
       </div>
 
     </form>
-  </div><!-- /container -->
+  </div>
 
+  <script src="/static/script.js"></script>
   <script>
-    function toggleAdvanced() {
-      const body = document.getElementById('advanced-body');
-      const btn  = document.querySelector('.advanced-toggle');
-      body.classList.toggle('open');
-      btn.textContent = body.classList.contains('open')
-        ? '▾ advanced — news sources'
-        : '▸ advanced — news sources';
+    function toggleSettingsGroup(btn) {
+      const group = btn.closest('.settings-group');
+      group.classList.toggle('open');
     }
+
+    function initThemePicker() {
+      const theme = localStorage.getItem('theme') || 'default';
+      const radio = document.querySelector(`input[name="theme"][value="${theme}"]`);
+      if (radio) radio.checked = true;
+    }
+    initThemePicker();
 
     function buildRssSources() {
       const cats = ['international', 'national', 'local', 'funny'];
@@ -222,7 +336,7 @@
         setTimeout(() => confirm.style.display = 'none', 3000);
       } else {
         confirm.textContent = '> error saving.';
-        confirm.style.color = '#c87878';
+        confirm.style.color = 'var(--accent-error)';
         confirm.style.display = 'inline';
       }
     }

@@ -1,5 +1,5 @@
 """
-Daily Brief — Desktop Entry Point
+Oh No It's Today — Desktop Entry Point
 Starts Flask in a background thread, then opens a native pywebview window.
 No browser required. No terminal window shown when launched via start.bat.
 """
@@ -17,7 +17,7 @@ from app.config_loader import get_config
 try:
     import webview
 except ImportError:
-    print("[dashboard] pywebview is not installed.")
+    print("[ohNoItsToday] pywebview is not installed.")
     print("  Run: pip install pywebview")
     sys.exit(1)
 
@@ -72,14 +72,14 @@ if __name__ == "__main__":
     api = WindowAPI()
 
     window = webview.create_window(
-        title="Daily Brief",
+        title="Oh No It's Today",
         url=f"http://localhost:{port}",
         width=980,
         height=920,
         min_size=(720, 600),
         background_color="#0a0a0a",
         js_api=api,
-        # frameless=True  ← uncomment for custom titlebar mode (see README)
+        frameless=True,
     )
 
     api.set_window(window)
