@@ -104,3 +104,27 @@ def load_history_day(date_str: str) -> dict | None:
         return None
     with open(path, 'r', encoding='utf-8') as f:
         return json.load(f)
+
+def update_wordle_status(status: str, attempts: int | None, guesses: list) -> bool:
+    """
+    Updates wordle result in both cache.json and the corresponding history file.
+    status: 'solved' | 'failed'
+    attempts: number of guesses used (1-6), or None if failed
+    guesses: list of 5-letter guess strings
+    """
+    cache = load_cache()
+    if cache is None:
+        return False
+    if 'wordle' not in cache:
+        cache['wordle'] = {}
+    cache['wordle']['status']   = status
+    cache['wordle']['attempts'] = attempts
+    cache['wordle']['guesses']  = guesses
+    with open(CACHE_FILE, 'w', encoding='utf-8') as f:
+        json.dump(cache, f, indent=2, ensure_ascii=False)
+    history_path = os.path.join(HISTORY_DIR, f"{cache['date']}.json")
+    if os.path.exists(history_path):
+        with open(history_path, 'w', encoding='utf-8') as f:
+            json.dump(cache, f, indent=2, ensure_ascii=False)
+    return True
+

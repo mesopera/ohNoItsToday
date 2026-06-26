@@ -9,6 +9,8 @@ from app.modules.weather import fetch_weather
 from app.modules.movies import get_movie_recommendation
 from app.modules.quotes import get_quote
 from app.modules.sidequest import generate_sidequest
+from app.modules.wordle import fetch_wordle_word
+from app.modules.cache import update_wordle_status
 from datetime import datetime
 import threading
 
@@ -119,6 +121,38 @@ def save_settings():
     save_config(new_config)
     return jsonify({'success': True})
 
+@app.route('/wordle')
+def wordle_page():
+    return render_template('wordle.html')
+
+
+@app.route('/api/wordle/word')
+def get_wordle_word():
+    """Returns today's Wordle word. Served from cache if available."""
+    cache = load_cache()
+    if cache and cache.get('wordle', {}).get('solution'):
+        w = cache['wordle']
+        return jsonify({
+            'solution': w['solution'],
+            'date':     w.get('date', cache.get('date', '')),
+            'number':   w.get('number', 0),
+        })
+    try:
+        data = fetch_wordle_word()
+        return jsonify({'solution': data['solution'], 'date': data['date'], 'number': data['number']})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/wordle/solved', methods=['POST'])
+def wordle_solved():
+    """Called when game ends. Updates cache + history file."""
+    body    = request.get_json() or {}
+    status  = body.get('status', 'failed')
+    attempts = body.get('attempts')
+    guesses  = body.get('guesses', [])
+    success  = update_wordle_status(status, attempts, guesses)
+    return jsonify({'success': success})
 
 # ── Orchestrator ─────────────────────────────────────────────────────────────
 
@@ -174,6 +208,14 @@ def _generate_day_data(config: dict, last_date) -> dict:
             'status': 'pending',
         }
         errors['sidequest'] = str(e)
+    
+    # 6. Wordle
+    try:
+        wordle_data = fetch_wordle_word()
+    except Exception as e:
+        wordle_data = {'solution': '', 'date': today.isoformat(), 'number': 0,
+                       'status': 'pending', 'attempts': None, 'guesses': [], 'error': str(e)}
+        errors['wordle'] = str(e)
 
     data = {
         'date': today.isoformat(),

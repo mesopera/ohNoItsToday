@@ -119,7 +119,7 @@ function renderDashboard(data) {
     renderWeather(data.weather || {});
     renderQuote(data.quote || {});
     renderMovies(data.movie_rec || {}, data.show_rec || {});
-    renderPuzzles(data.date);
+    renderPuzzles(data.date, data.wordle || {});
     renderQuest(data.sidequest || {});
     renderFooter(data.generated_at);
     if (data.errors && Object.keys(data.errors).length > 0) {
@@ -205,34 +205,55 @@ function renderMovies(movie, show) {
 }
 
 // ── Puzzles ───────────────────────────────────────────────────────────────────
-function renderPuzzles(dateStr) {
+// Decorative tile states for the "WORDLE" preview — purely aesthetic
+const PREVIEW = [
+    { l: 'W', s: 'correct' },
+    { l: 'O', s: 'absent'  },
+    { l: 'R', s: 'present' },
+    { l: 'D', s: 'correct' },
+    { l: 'L', s: 'absent'  },
+    { l: 'E', s: 'present' },
+];
+
+function renderPuzzles(dateStr, wordle) {
     const el = document.getElementById('puzzles-content');
     if (!el) return;
-    
-    const puzzleDate = dateStr ? new Date(dateStr + 'T12:00:00') : new Date();
-    const startDate = new Date('2021-06-19T12:00:00');
-    const diffTime = puzzleDate.getTime() - startDate.getTime();
-    const wordleNum = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
-    
+
+    const num    = wordle.number || calcWordleNumber(dateStr);
+    const status = wordle.status || 'pending';
+
+    const tiles = PREVIEW.map(p =>
+        `<div class="wp-tile wp-tile--${p.s}">${p.l}</div>`
+    ).join('');
+
+    let statusHTML;
+    if (status === 'solved') {
+        statusHTML = `<span class="quest-status done">✓ solved ${wordle.attempts}/6</span>`;
+    } else if (status === 'failed') {
+        const ans = wordle.solution ? ` — ${wordle.solution}` : '';
+        statusHTML = `<span class="wordle-status-failed">✗ not today${esc(ans)}</span>`;
+    } else {
+        statusHTML = `<span class="wordle-status-pending">— not played yet</span>`;
+    }
+
     el.innerHTML = `
         <div class="puzzle-block">
             <div class="puzzle-item">
                 <span class="puzzle-label">wordle</span>
                 <div>
-                    <span class="puzzle-title">NYT Wordle #${wordleNum}</span>
-                    <p class="puzzle-desc">The official daily word puzzle. Guesses: 6. Word length: 5 letters.</p>
-                    <a class="puzzle-link" href="https://www.nytimes.com/games/wordle/index.html" target="_blank" rel="noopener noreferrer">play wordle ↗</a>
-                </div>
-            </div>
-            <div class="puzzle-item">
-                <span class="puzzle-label">cross</span>
-                <div>
-                    <span class="puzzle-title">Easy Crossword</span>
-                    <p class="puzzle-desc">Stan Newman's Daily Easy Crossword. Gentle challenge with an easy theme, all-easy clues, and minimal trivia.</p>
-                    <a class="puzzle-link" href="https://play.dictionary.com/games/easy-crossword" target="_blank" rel="noopener noreferrer">play easy crossword ↗</a>
+                    <a href="/wordle" class="wp-preview-link">
+                        <div class="wp-preview-row">${tiles}</div>
+                        <span class="wp-num">#${num}</span>
+                    </a>
+                    <div class="wp-status">${statusHTML}</div>
                 </div>
             </div>
         </div>`;
+}
+
+function calcWordleNumber(dateStr) {
+    const d = dateStr ? new Date(dateStr + 'T12:00:00') : new Date();
+    return Math.max(1, Math.floor((d - new Date('2021-06-19T12:00:00')) / 86400000) + 1);
 }
 
 // ── Side Quest ────────────────────────────────────────────────────────────────
@@ -349,7 +370,7 @@ async function loadHistoryDay(dateStr) {
             ${hSection('Weather', hWeather(data.weather||{}))}
             ${hSection('Quote', hQuote(data.quote||{}))}
             ${hSection('Watch', hMovies(data.movie_rec||{}, data.show_rec||{}))}
-            ${hSection('Puzzles', hPuzzles(data.date))}
+            ${hSection('Puzzles', hPuzzles(data.date, data.wordle || {}))}
             ${hSection('Side Quest', hQuest(data.sidequest||{}))}
         </div>`;
 }
@@ -416,28 +437,30 @@ function hQuest(q) {
     </div>`;
 }
 
-function hPuzzles(dateStr) {
-    const puzzleDate = dateStr ? new Date(dateStr + 'T12:00:00') : new Date();
-    const startDate = new Date('2021-06-19T12:00:00');
-    const diffTime = puzzleDate.getTime() - startDate.getTime();
-    const wordleNum = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
-    
+function hPuzzles(dateStr, wordle) {
+    wordle = wordle || {};
+    const num    = wordle.number || calcWordleNumber(dateStr);
+    const status = wordle.status || 'pending';
+    const tiles  = PREVIEW.map(p => `<div class="wp-tile wp-tile--${p.s}">${p.l}</div>`).join('');
+
+    let statusHTML;
+    if (status === 'solved') {
+        statusHTML = `<span class="quest-status done">✓ solved ${wordle.attempts}/6</span>`;
+    } else if (status === 'failed') {
+        const ans = wordle.solution ? ` — ${wordle.solution}` : '';
+        statusHTML = `<span class="wordle-status-failed">✗ not today${esc(ans)}</span>`;
+    } else {
+        statusHTML = `<span class="wordle-status-pending">— not played</span>`;
+    }
+
     return `
         <div class="puzzle-block">
             <div class="puzzle-item">
                 <span class="puzzle-label">wordle</span>
                 <div>
-                    <span class="puzzle-title">NYT Wordle #${wordleNum}</span>
-                    <p class="puzzle-desc">The official daily word puzzle. Guesses: 6. Word length: 5 letters.</p>
-                    <a class="puzzle-link" href="https://www.nytimes.com/games/wordle/index.html" target="_blank" rel="noopener">play wordle ↗</a>
-                </div>
-            </div>
-            <div class="puzzle-item">
-                <span class="puzzle-label">cross</span>
-                <div>
-                    <span class="puzzle-title">Easy Crossword</span>
-                    <p class="puzzle-desc">Stan Newman's Daily Easy Crossword. Gentle challenge with an easy theme, all-easy clues, and minimal trivia.</p>
-                    <a class="puzzle-link" href="https://play.dictionary.com/games/easy-crossword" target="_blank" rel="noopener">play easy crossword ↗</a>
+                    <div class="wp-preview-row" style="margin-bottom:6px">${tiles}</div>
+                    <span class="wp-num">#${num}</span>
+                    <div class="wp-status">${statusHTML}</div>
                 </div>
             </div>
         </div>`;
