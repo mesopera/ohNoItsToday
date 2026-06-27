@@ -1,115 +1,116 @@
-# Oh No It's Today — Desktop App
+# 🌅 Oh No It's Today
 
-A personal morning dashboard. Runs as a native desktop window (no browser).
-Powered by Groq LLM, Open-Meteo, Letterboxd RSS, and your local news feeds.
+> *Your attention span deserves better than doomscrolling.*
 
----
+A desktop app that gives you everything worth knowing before your first coffee. News, weather, recommendations, and one tiny reason to get out of bed.
 
-## What it does
-
-Opens a dark, minimal window every morning with:
-- **News** — RSS headlines filtered and summarised by an LLM
-- **Weather** — temperature, sunrise/sunset, rain warning
-- **Quote** — 50/50 motivational vs. absurd
-- **Watch** — one film + one TV series, personalised from your Letterboxd
-- **Side Quest** — one small actionable challenge for the day
-- **Archive** — every past day's brief, browsable
+Powered by **Groq**, **Open-Meteo**, **Letterboxd**, and RSS.
 
 ---
 
-## Quick Start
+# Installation
 
-### 1. Clone / download the project
-```
+### 1. Clone the project
+
+```bash
 git clone <your-repo> ohNoItsToday
 cd ohNoItsToday
 ```
 
 ### 2. Create a virtual environment
-```
+
+```bash
 python -m venv venv
-venv\Scripts\activate        # Windows
-# source venv/bin/activate   # macOS / Linux
+venv\Scripts\activate
+# source venv/bin/activate
 ```
 
 ### 3. Install dependencies
-```
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 4. Copy the example config
-```
-copy config.example.yaml config.yaml   # Windows
-# cp config.example.yaml config.yaml   # macOS / Linux
+### 4. Create your config
+
+```bash
+copy config.example.yaml config.yaml
+# cp config.example.yaml config.yaml
 ```
 
-### 5. Edit config.yaml
-Open `config.yaml` and fill in:
-- `groq.api_key` — free at https://console.groq.com
-- `location.city` / `location.country` — for weather
-- `letterboxd.username` — your Letterboxd username (or leave blank)
+Open `config.yaml` and add:
 
-### 6. Launch
-```
-python run.py          # shows a console window
-pythonw run.py         # no console window (Windows only)
-start.bat              # double-click shortcut (Windows, no console)
+* Groq API key
+* City & country
+* Letterboxd username (optional, but your recommendations will stop sucking if you do.)
+
+### 5. Run
+
+```bash
+python run.py
 ```
 
-The app opens a native frameless window with a custom titlebar. No browser tab. No terminal needed after launch.
+On Windows, you can also use:
+
+```bash
+pythonw run.py
+```
+
+or simply double-click `start.bat` if typing is too physically demanding.
 
 ---
 
-## Building a standalone .exe (Windows)
+# Features
 
-Packages everything into `dist\OhNoItsToday\OhNoItsToday.exe`.
-No Python installation required on the target machine.
+### 📰 Smart News
 
-```
-build.bat
-```
+Top headlines filtered and summarized into a quick morning briefing.
 
-Distribute by zipping the entire `dist\OhNoItsToday\` folder.
+### 🌤 Weather
 
----
+Current conditions, rain alerts, Whether the sky has beef with you today and sunrise/sunset.
 
-## Settings
+### 💬 Daily Quote
 
-Click **settings** in the footer, or go to `http://localhost:5000/settings` in a browser.
+half profound - half complete horseshit. You'll read it anyway.
 
-You can also edit `config.yaml` directly and restart the app.
+### 🎬 Watch Tonight
 
-### Themes
+One movie and one TV recommendation, so you can spend your evening watching something instead of spending an hour deciding what to watch.
 
-Five themes are available in **Settings → Appearance**:
+### 🎲 Side Quest
 
-| Theme | Vibe |
-|-------|------|
-| **Default** | Warm dark minimal (JetBrains Mono + Lora) |
-| **Hacker** | Matrix green terminal, 1999 basement |
-| **Newspaper** | Aged newsprint broadsheet |
-| **Magic** | Hand-drawn star chart, purple ink |
-| **Monochrome** | Pure black & white photocopier zine |
+A small challenge to make today slightly less identical to yesterday. Touch grass. Learn to juggle. Start a revolution. Call your mum.
 
-Theme choice is saved in your browser's local storage and persists across sessions.
+### 📚 Archive
+
+Every day's briefing is saved forever so future-you can remember exactly when everything started going downhill.
 
 ---
 
-## Data
+# Privacy
 
-- `data/cache.json` — today's cached brief (regenerated each new day)
-- `data/history/YYYY-MM-DD.json` — one file per day, kept forever
-- `data/geo_cache.json` — cached lat/lon for your city
+Everything is stored locally.
 
-All data is local. Nothing leaves your machine except API calls to Groq and Open-Meteo.
+The app only contacts Groq for AI responses and Open-Meteo for weather.
+
+No accounts.
+No analytics.
+No telemetry.
+No selling your soul for ads
 
 ---
 
-## Groq usage
+# Why?
 
-The free Groq tier is sufficient. Each morning refresh makes ~3 LLM calls:
-1. News filter + summarise (~2000 tokens in, ~800 out)
-2. Movie/TV recommendation (~500 tokens in, ~200 out)
-3. Side quest generation (~100 tokens in, ~150 out)
+Most mornings begin the same way:
 
-Total: well within free daily limits.
+Open the weather.
+Open the news.
+Scroll Reddit.
+Wonder what to watch tonight.
+Forget what you were doing.
+
+**Oh No It's Today** puts the useful bits in one place, then gets out of your way.
+
+Then you can get on with whatever it is you pretend you're going to accomplish today.
