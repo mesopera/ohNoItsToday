@@ -103,6 +103,35 @@ def update_quest():
     success = update_quest_status(status)
     return jsonify({'success': success})
 
+@app.route('/api/journal', methods=['POST'])
+def save_journal():
+    body = request.get_json() or {}
+
+    text = body.get("journal", "")
+
+    # Prevent absurdly large entries
+    if len(text) > 5000:
+        text = text[:5000]
+
+    cache = load_cache() or {}
+
+    cache["journal"] = text
+
+    save_cache(cache)
+
+    return jsonify({
+        "success": True,
+        "journal": text
+    })
+
+
+@app.route('/api/journal')
+def load_journal():
+    cache = load_cache() or {}
+
+    return jsonify({
+        "journal": cache.get("journal", "")
+    })
 
 @app.route('/api/refresh', methods=['POST'])
 def force_refresh():
@@ -166,6 +195,7 @@ def _generate_day_data(config: dict, last_date) -> dict:
     today = get_current_day(boundary_hour)
     fetch_since = get_fetch_since(boundary_hour)
     errors = {}
+    existing = load_cache() or {}
 
     # 1. News
     try:
@@ -228,6 +258,8 @@ def _generate_day_data(config: dict, last_date) -> dict:
         'movie_rec': movie_data.get('movie_rec', {}),
         'show_rec': movie_data.get('show_rec', {}),
         'sidequest': quest_data,
+        'wordle': wordle_data,
+        'journal': existing.get("journal", ""),
         'errors': errors,
     }
 
