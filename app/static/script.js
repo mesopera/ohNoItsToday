@@ -304,6 +304,82 @@ async function updateQuest(status) {
         }
     }
 }
+// ── Journal ───────────────────────────────────────────────────────────────
+
+const journal = document.getElementById("journal");
+const saveBtn = document.getElementById("save-journal");
+const status = document.getElementById("journal-status");
+
+if (journal) {
+
+    let timer;
+
+    // Auto expand + autosave
+    journal.addEventListener("input", () => {
+        journal.style.height = "auto";
+        journal.style.height = journal.scrollHeight + "px";
+
+        clearTimeout(timer);
+        timer = setTimeout(() => saveJournal(false), 1000);
+    });
+
+    // Load today's journal
+    fetch("/api/journal")
+        .then(r => r.json())
+        .then(data => {
+            journal.value = data.journal || "";
+
+            journal.style.height = "auto";
+            journal.style.height = journal.scrollHeight + "px";
+        })
+        .catch(err => console.error("Failed to load journal:", err));
+
+    async function saveJournal(showMessage = false) {
+
+        try {
+            const resp = await fetch("/api/journal", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    journal: journal.value
+                })
+            });
+
+            if (!resp.ok) return;
+
+            // Only show feedback for manual saves
+            if (showMessage && status) {
+                status.textContent = "✓ Saved";
+
+                clearTimeout(status._timer);
+
+                status._timer = setTimeout(() => {
+                    status.textContent = "";
+                }, 1200);
+            }
+
+        } catch (err) {
+            console.error("Failed to save journal:", err);
+
+            if (showMessage && status) {
+                status.textContent = "✗ Failed";
+
+                clearTimeout(status._timer);
+
+                status._timer = setTimeout(() => {
+                    status.textContent = "";
+                }, 1500);
+            }
+        }
+    }
+
+    // Manual save button
+    if (saveBtn) {
+        saveBtn.addEventListener("click", () => saveJournal(true));
+    }
+}
 
 // ── Footer ────────────────────────────────────────────────────────────────────
 function renderFooter(generatedAt) {
@@ -372,7 +448,20 @@ async function loadHistoryDay(dateStr) {
             ${hSection('Watch', hMovies(data.movie_rec||{}, data.show_rec||{}))}
             ${hSection('Puzzles', hPuzzles(data.date, data.wordle || {}))}
             ${hSection('Side Quest', hQuest(data.sidequest||{}))}
+            ${hSection('Journal', hJournal(data.journal))}
         </div>`;
+}
+
+function hJournal(text) {
+
+    if (!text)
+        return '<p class="error-msg">> no journal entry.</p>';
+
+    return `
+        <div class="quote-block">
+            <p class="quote-text">${esc(text)}</p>
+        </div>
+    `;
 }
 
 // History sub-renderers (read-only, no quest actions)

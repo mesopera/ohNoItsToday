@@ -393,6 +393,52 @@ body {
 .quest-status.done  { color: var(--accent-done); }
 .quest-status.skipped { color: var(--accent-skip); }
 
+
+/* ── Journal ───────────────────────────── */
+
+.journal-input{
+    width:100%;
+    min-height:120px;
+    max-height:320px;
+
+    resize:vertical;
+
+    background:var(--surface);
+    color:var(--text);
+
+    border:1px solid var(--border);
+
+    padding:14px;
+
+    font-family:var(--font-body);
+    font-size:14px;
+    line-height:1.8;
+
+    outline:none;
+
+    transition:border-color .15s;
+}
+
+.journal-input:focus{
+    border-color:var(--accent);
+}
+
+.journal-input::placeholder{
+    color:var(--text-dimmer);
+}
+
+.journal-actions{
+    margin-top:12px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+#journal-status{
+    font-size:12px;
+    color:var(--accent-done);
+}
+
 /* ── Footer ──────────────────────────────────────────────────────────────── */
 .footer {
   margin-top: 64px;
@@ -861,8 +907,7 @@ body.wordle-page .header-rule { margin-bottom: 16px; }
 
 /* Submitted states */
 .wordle-tile[data-state="correct"] { background: var(--accent-done); border-color: var(--accent-done); color: var(--bg); }
-.wordle-tile[data-state="present"] { background: var(--accent);      border-color: var(--accent);      color: var(--bg); }
-.wordle-tile[data-state="absent"]  { background: var(--text-dimmer); border-color: var(--text-dimmer); color: var(--bg); }
+.wordle-tile[data-state="present"] { background: var(--accent);      border-color: var(--accent);      color: var(--bg); }.wordle-key[data-state="absent"] {background: #555; border: 1px solid #555; color: #ddd; opacity: .8;}
 
 /* ── Tile Animations ─────────────────────────────────────────────────────────── */
 @keyframes wp-pop {
