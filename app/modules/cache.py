@@ -128,3 +128,20 @@ def update_wordle_status(status: str, attempts: int | None, guesses: list) -> bo
             json.dump(cache, f, indent=2, ensure_ascii=False)
     return True
 
+def update_weball_result(data: dict) -> bool:
+    """
+    Saves We Ball race result into today's cache + history file.
+    Called from the client after each race completes.
+    data: the full archive entry from weball.js
+    """
+    cache = load_cache()
+    if cache is None:
+        return False
+    cache['weball'] = data
+    with open(CACHE_FILE, 'w', encoding='utf-8') as f:
+        json.dump(cache, f, indent=2, ensure_ascii=False)
+    history_path = os.path.join(HISTORY_DIR, f"{cache['date']}.json")
+    if os.path.exists(history_path):
+        with open(history_path, 'w', encoding='utf-8') as f:
+            json.dump(cache, f, indent=2, ensure_ascii=False)
+    return True

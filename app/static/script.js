@@ -55,10 +55,9 @@ const LOADING_MESSAGES = [
     '> fetching news feeds...',
     '> consulting the oracle...',
     '> reading the skies...',
-    '> raiding your letterboxd...',
+    '> judging your letterboxd...',
     '> guessing daily wordle...',
-    '> shuffling crossword tiles...',
-    '> playing games or smtg...',
+    '> gambling away savings...',
     '> rolling for side quest...',
     '> assembling today\'s brief...',
 ];
@@ -215,25 +214,59 @@ const PREVIEW = [
     { l: 'E', s: 'present' },
 ];
 
+// We Ball — colors match weball.js constants
+const WB_DOT_COLORS = { Red:'#e05547', Blue:'#4d8fe0', Green:'#4cba6a', Yellow:'#d4b84a', Purple:'#8c5ce0' };
+const WB_DOT_NAMES  = ['Red','Blue','Green','Yellow','Purple'];
+
+function readWeballToday() {
+    try {
+        const raw = localStorage.getItem('wb_today');
+        if (!raw) return null;
+        const t = JSON.parse(raw);
+        return (t && t.date === new Date().toISOString().slice(0,10)) ? t : null;
+    } catch { return null; }
+}
+function readWeballBalance() {
+    try { return JSON.parse(localStorage.getItem('wb_player'))?.balance ?? 50; }
+    catch { return 50; }
+}
+
 function renderPuzzles(dateStr, wordle) {
     const el = document.getElementById('puzzles-content');
     if (!el) return;
 
+    // ── Wordle ──
     const num    = wordle.number || calcWordleNumber(dateStr);
-    const status = wordle.status || 'pending';
-
-    const tiles = PREVIEW.map(p =>
-        `<div class="wp-tile wp-tile--${p.s}">${p.l}</div>`
-    ).join('');
-
-    let statusHTML;
-    if (status === 'solved') {
-        statusHTML = `<span class="quest-status done">✓ solved ${wordle.attempts}/6</span>`;
-    } else if (status === 'failed') {
+    const wstatus = wordle.status || 'pending';
+    const tiles = PREVIEW.map(p => `<div class="wp-tile wp-tile--${p.s}">${p.l}</div>`).join('');
+    let wordleStatusHTML;
+    if (wstatus === 'solved') {
+        wordleStatusHTML = `<span class="quest-status done">✓ solved ${wordle.attempts}/6</span>`;
+    } else if (wstatus === 'failed') {
         const ans = wordle.solution ? ` — ${wordle.solution}` : '';
-        statusHTML = `<span class="wordle-status-failed">✗ not today${esc(ans)}</span>`;
+        wordleStatusHTML = `<span class="wordle-status-failed">✗ not today${esc(ans)}</span>`;
     } else {
-        statusHTML = `<span class="wordle-status-pending">— not played yet</span>`;
+        wordleStatusHTML = `<span class="wordle-status-pending">— not played yet</span>`;
+    }
+
+    // ── We Ball ──
+    const wb      = readWeballToday();
+    const wbBal   = readWeballBalance();
+    const wbDots  = WB_DOT_NAMES.map(n =>
+        `<div class="wb-dash-dot" style="background:${WB_DOT_COLORS[n]}"></div>`
+    ).join('');
+    let wbStatusHTML;
+    if (wb) {
+        const bet = wb.playerBet;
+        if (bet?.result === 'win') {
+            wbStatusHTML = `<span class="quest-status done">✓ won +⬡${bet.payout - bet.wager}</span>`;
+        } else if (bet?.result === 'lose') {
+            wbStatusHTML = `<span class="wordle-status-failed">✗ lost ⬡${bet.wager}</span>`;
+        } else {
+            wbStatusHTML = `<span class="wordle-status-pending">— watched</span>`;
+        }
+    } else {
+        wbStatusHTML = `<span class="wordle-status-pending">— not raced yet</span>`;
     }
 
     el.innerHTML = `
@@ -245,7 +278,17 @@ function renderPuzzles(dateStr, wordle) {
                         <div class="wp-preview-row">${tiles}</div>
                         <span class="wp-num">#${num}</span>
                     </a>
-                    <div class="wp-status">${statusHTML}</div>
+                    <div class="wp-status">${wordleStatusHTML}</div>
+                </div>
+            </div>
+            <div class="puzzle-item">
+                <span class="puzzle-label">we ball</span>
+                <div>
+                    <a href="/weball" class="wp-preview-link">
+                        <div class="wb-dash-dots">${wbDots}</div>
+                        <span class="wp-num">⬡ ${wbBal}</span>
+                    </a>
+                    <div class="wp-status">${wbStatusHTML}</div>
                 </div>
             </div>
         </div>`;

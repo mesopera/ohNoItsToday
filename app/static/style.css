@@ -400,22 +400,15 @@ body {
     width:100%;
     min-height:120px;
     max-height:320px;
-
     resize:vertical;
-
     background:var(--surface);
     color:var(--text);
-
     border:1px solid var(--border);
-
     padding:14px;
-
     font-family:var(--font-body);
     font-size:14px;
     line-height:1.8;
-
     outline:none;
-
     transition:border-color .15s;
 }
 
@@ -1056,3 +1049,416 @@ body.wordle-page .header-rule { margin-bottom: 16px; }
 [data-theme="monochrome"] .wp-tile--correct  { background: #ffffff; border-color: #ffffff; color: #000000; }
 [data-theme="monochrome"] .wp-tile--present  { background: #606060; border-color: #606060; color: #ffffff; }
 [data-theme="monochrome"] .wp-tile--absent   { background: #303030; border-color: #303030; color: #606060; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   WE BALL — Dashboard Preview
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Two-column layout for Wordle + We Ball side by side */
+.puzzle-block {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 48px;
+}
+@media (max-width: 560px) { .puzzle-block { grid-template-columns: 1fr; } }
+
+/* Five colored dots shown on the dashboard */
+.wb-dash-dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.wb-dash-dot {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  opacity: 0.9;
+  transition: transform 0.15s;
+}
+.wp-preview-link:hover .wb-dash-dot { transform: translateY(-1px); }
+
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   WE BALL — Page Layout
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+body.weball-page {
+  padding-top: 36px;   /* titlebar height */
+  padding-bottom: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.wb-shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 36px);
+  overflow: hidden;
+}
+
+/* Screens — only one visible at a time */
+.wb-screen {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 32px;
+}
+
+.wb-screen--race {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+}
+
+#wb-canvas {
+  display: block;
+  max-width: 100%;
+}
+
+.wb-race-status {
+  font-size: 11px;
+  color: var(--text-dimmer);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 10px;
+  font-family: var(--font-body);
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   WE BALL — Pre-Race Screen
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.wb-meta-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.wb-badge {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+}
+.wb-badge--dim { color: var(--text-dimmer); border-color: transparent; }
+
+.wb-headlines {
+  margin-bottom: 28px;
+  padding-left: 16px;
+  border-left: 2px solid var(--border);
+}
+.wb-headline {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.7;
+  margin: 0 0 4px 0;
+}
+.wb-tax-msg {
+  font-size: 11px;
+  color: var(--accent);
+  margin-top: 8px;
+  margin-bottom: 0;
+  letter-spacing: 0.03em;
+}
+
+.wb-subheading {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dimmer);
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'Lora', serif;
+  font-weight: 600;
+}
+
+
+/* ── Racer grid ─────────────────────────────────────────────────────────────── */
+.wb-racer-grid {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.wb-racer-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid var(--border);
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  min-width: 70px;
+  font-family: var(--font-body);
+}
+.wb-racer-option:hover {
+  border-color: var(--rc, var(--accent));
+}
+.wb-racer-option--selected {
+  border-color: var(--rc, var(--accent));
+  background: color-mix(in srgb, var(--rc, var(--accent)) 10%, transparent);
+}
+
+.wb-racer-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+.wb-racer-dot--sm {
+  width: 10px;
+  height: 10px;
+}
+
+.wb-racer-name {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.wb-streaks {
+  font-size: 10px;
+  min-height: 14px;
+  letter-spacing: 0;
+}
+.wb-streak-bad { color: var(--text-dimmer); }
+
+
+/* ── Wager row ──────────────────────────────────────────────────────────────── */
+.wb-wager-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.wb-wager-input {
+  width: 90px !important;
+  text-align: center;
+}
+
+.wb-wager-shortcuts {
+  display: flex;
+  gap: 6px;
+}
+
+.wb-chip {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dimmer);
+  font-family: var(--font-body);
+  font-size: 11px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.12s;
+  letter-spacing: 0.05em;
+}
+.wb-chip:hover { border-color: var(--accent); color: var(--accent); }
+
+.wb-pool-preview {
+  font-size: 12px;
+  color: var(--text-dimmer);
+  margin: -12px 0 20px 0;
+}
+
+
+/* ── AI Bettors ─────────────────────────────────────────────────────────────── */
+.wb-ai-grid {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+
+.wb-ai-bettor {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  font-size: 11px;
+}
+
+.wb-ai-id {
+  color: var(--text-dimmer);
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  min-width: 22px;
+}
+
+.wb-ai-wager {
+  color: var(--text-dim);
+  font-size: 10px;
+}
+
+
+/* ── Race CTA ───────────────────────────────────────────────────────────────── */
+.wb-cta {
+  background: none;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--font-body);
+  font-size: 13px;
+  padding: 10px 32px;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  margin-top: 4px;
+}
+.wb-cta:hover { background: var(--accent); color: var(--bg); }
+.wb-cta:disabled { opacity: 0.4; pointer-events: none; }
+
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   WE BALL — Results Screen
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.wb-result-order {
+  margin-bottom: 24px;
+}
+
+.wb-result-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.wb-result-row:first-child { padding-top: 0; }
+
+.wb-result-pos {
+  font-size: 11px;
+  color: var(--text-dimmer);
+  letter-spacing: 0.06em;
+  min-width: 30px;
+}
+
+.wb-result-name { color: var(--text-dim); font-size: 13px; }
+
+.wb-result-crown {
+  color: var(--accent);
+  margin-left: auto;
+  font-size: 12px;
+}
+
+.wb-bet-result {
+  font-size: 14px;
+  padding: 10px 0;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.wb-bet-win  { color: var(--accent-done); }
+.wb-bet-lose { color: var(--accent-error, #c87878); }
+
+.wb-result-balance {
+  font-size: 12px;
+  color: var(--text-dimmer);
+  margin: 0 0 24px 0;
+}
+
+.wb-result-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.wb-done-summary { margin-bottom: 24px; }
+
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   WE BALL — Archive Screen
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.wb-archive-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.wb-archive-entry {
+  display: grid;
+  grid-template-columns: 160px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.wb-archive-entry:first-child { padding-top: 0; }
+
+.wb-archive-date {
+  font-size: 12px;
+  color: var(--text-dimmer);
+  letter-spacing: 0.03em;
+}
+
+.wb-archive-dots {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.wb-archive-bet { font-size: 12px; text-align: right; }
+
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   WE BALL — Theme Overrides
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+[data-theme="hacker"] .wb-cta          { border-color: var(--accent); }
+[data-theme="hacker"] .wb-racer-option:hover { background: rgba(0,200,50,0.07); }
+[data-theme="hacker"] .wb-chip:hover   { border-color: var(--accent); }
+
+[data-theme="monochrome"] .wb-bet-win  { color: #ffffff; }
+[data-theme="monochrome"] .wb-bet-lose { color: #808080; }
+[data-theme="monochrome"] .wb-cta      { border-color: #ffffff; color: #ffffff; }
+[data-theme="monochrome"] .wb-cta:hover{ background: #ffffff; color: #000000; }
+
+
+/* ── We Ball: Circuit name display ────────────────────────────────────────── */
+.wb-circuit-display {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: 18px;
+  color: var(--text);
+  margin: 0 0 16px 0;
+  letter-spacing: 0.01em;
+}
+
+.wb-race-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.wb-circuit-name {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--text-dim);
+  letter-spacing: 0.03em;
+  cursor: default;
+}

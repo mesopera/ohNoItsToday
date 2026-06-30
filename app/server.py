@@ -106,19 +106,13 @@ def update_quest():
 @app.route('/api/journal', methods=['POST'])
 def save_journal():
     body = request.get_json() or {}
-
     text = body.get("journal", "")
-
     # Prevent absurdly large entries
     if len(text) > 5000:
         text = text[:5000]
-
     cache = load_cache() or {}
-
     cache["journal"] = text
-
     save_cache(cache)
-
     return jsonify({
         "success": True,
         "journal": text
@@ -154,6 +148,9 @@ def save_settings():
 def wordle_page():
     return render_template('wordle.html')
 
+@app.route('/weball')
+def weball_page():
+    return render_template('weball.html')
 
 @app.route('/api/wordle/word')
 def get_wordle_word():
@@ -182,6 +179,14 @@ def wordle_solved():
     guesses  = body.get('guesses', [])
     success  = update_wordle_status(status, attempts, guesses)
     return jsonify({'success': success})
+
+@app.route('/api/weball/day/<date_str>')
+def weball_day(date_str):
+    """Returns We Ball data for a specific date from history files."""
+    data = load_history_day(date_str)
+    if data is None:
+        return jsonify({'error': 'Not found'}), 404
+    return jsonify(data.get('weball', {}))
 
 # ── Orchestrator ─────────────────────────────────────────────────────────────
 
