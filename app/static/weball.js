@@ -147,7 +147,7 @@ function buildTrack(prng, W, H) {
     }
 
     // Scale to fit canvas with padding
-    const PAD  = 0.10;
+    const PAD  = 0.08;
     const scaleX = W * (1 - PAD * 2) / (maxX - minX);
     const scaleY = H * (1 - PAD * 2) / (maxY - minY);
     const scale  = Math.min(scaleX, scaleY);  // uniform scale, preserve aspect ratio
@@ -193,8 +193,40 @@ function buildTrack(prng, W, H) {
     const GATE_X = ctrl[0].x;
     const GATE_Y = ctrl[0].y;
 
+    // ── Distance-to-track field ──────────────────────────────────────────
+    // Grid-bucket the track samples so we can cheaply find "nearest track point
+    // to any (x,y)" without an O(SAMPLES) scan per candidate. This is what lets
+    // us reject any decoration whose footprint would overlap ANY part of the
+    // track, not just the locally nearest segment (which is what caused trees
+    // to land on a different loop of a serpentine layout).
+    const CELL = 24;
+    const grid = new Map();
+    const cellKey = (cx, cy) => `${cx},${cy}`;
+    for (const p of pts) {
+        const cx = Math.floor(p.x / CELL), cy = Math.floor(p.y / CELL);
+        const k = cellKey(cx, cy);
+        if (!grid.has(k)) grid.set(k, []);
+        grid.get(k).push(p);
+    }
+    function distToTrack(x, y) {
+        const cx = Math.floor(x / CELL), cy = Math.floor(y / CELL);
+        let best = Infinity;
+        for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+                const bucket = grid.get(cellKey(cx + dx, cy + dy));
+                if (!bucket) continue;
+                for (const p of bucket) {
+                    const d = Math.hypot(p.x - x, p.y - y);
+                    if (d < best) best = d;
+                }
+            }
+        }
+        return best;
+    }
+
+    const TRACK_HALF_WIDTH = 11; // matches the 20-22px stroke drawn in drawScene
+
     // ── Grandstands near start/finish ──────────────────────────────────────
-    // Find perpendicular direction at gate for stand placement
     const g0 = ctrl[0], g1 = ctrl[Math.min(3, ctrl.length - 1)];
     const gdx = g1.x - g0.x, gdy = g1.y - g0.y;
     const glen = Math.hypot(gdx, gdy) || 1;
@@ -203,82 +235,104 @@ function buildTrack(prng, W, H) {
     const stands = [];
     const CROWD_COLORS = ['#c87878','#7898c8','#78c878','#c8b878','#a878c8','#c89878'];
 
-    // Two stands flanking the start gate
-    for (let side = -1; side <= 1; side += 2) {
-        const standW = 54 + prng.float(-8, 8);
-        const standH = 22 + prng.float(-4, 4);
-        const dist   = 22 + prng.float(2, 6);
-        const sx = GATE_X + gnx * side * dist - standW / 2;
-        const sy = GATE_Y + gny * side * dist - standH / 2;
-        const rows = 4;
-        const rowH = standH / rows;
+    function buildStand(cx, cy, w, h, rows, alpha) {
         const dots = [];
+        const rowH = h / rows;
         for (let r = 0; r < rows; r++) {
-            const numDots = Math.floor(standW / 4);
+            const numDots = Math.floor(w / 4);
             for (let d = 0; d < numDots; d++) {
                 dots.push({
-                    x: sx + d * 4 + prng.float(-1, 1),
-                    y: sy + r * rowH + rowH * 0.5 + prng.float(-1, 1),
+                    x: cx - w/2 + d * 4 + prng.float(-1, 1),
+                    y: cy - h/2 + r * rowH + rowH * 0.5 + prng.float(-1, 1),
                     r: prng.float(1, 2),
                     c: prng.pick(CROWD_COLORS),
                 });
             }
         }
-        stands.push({ x: sx, y: sy, w: standW, h: standH, rows, dots, a: 0.75 });
+        return { x: cx - w/2, y: cy - h/2, w, h, rows, dots, a: alpha };
     }
 
-    // Extra small stand 1/3 of the way around the track
-    const midIdx = Math.floor(SAMPLES / 3);
-    const midPt  = pts[midIdx];
-    const midPtB = pts[Math.min(midIdx + 3, SAMPLES - 1)];
-    const mdx = midPtB.x - midPt.x, mdy = midPtB.y - midPt.y;
-    const mlen = Math.hypot(mdx, mdy) || 1;
-    const mnx = -mdy / mlen;
-    const mny =  mdx / mlen;
-    const mW = 42, mH = 16, mDist = 20;
-    const msx = midPt.x + mnx * mDist - mW / 2;
-    const msy = midPt.y + mny * mDist - mH / 2;
-    const mDots = [];
-    for (let r = 0; r < 3; r++) {
-        for (let d = 0; d < Math.floor(mW / 4); d++) {
-            mDots.push({
-                x: msx + d * 4 + prng.float(-1, 1),
-                y: msy + r * (mH/3) + (mH/3)*0.5,
-                r: prng.float(1, 1.8),
-                c: prng.pick(CROWD_COLORS),
-            });
+    // Try placing a stand at increasing distance from the gate until it clears the track
+    function placeStandNear(baseX, baseY, nx, ny, w, h, rows, alpha) {
+        for (let dist = TRACK_HALF_WIDTH + h/2 + 4; dist < TRACK_HALF_WIDTH + h/2 + 70; dist += 4) {
+            const cx = baseX + nx * dist, cy = baseY + ny * dist;
+            // Check all 4 corners + center clear the track
+            const corners = [
+                [cx, cy], [cx - w/2, cy - h/2], [cx + w/2, cy - h/2],
+                [cx - w/2, cy + h/2], [cx + w/2, cy + h/2],
+            ];
+            const clear = corners.every(([x, y]) => distToTrack(x, y) > TRACK_HALF_WIDTH + 3);
+            const inBounds = cx - w/2 > 4 && cx + w/2 < W - 4 && cy - h/2 > 4 && cy + h/2 < H - 4;
+            if (clear && inBounds) return buildStand(cx, cy, w, h, rows, alpha);
         }
+        return null; // couldn't find a clear spot — skip this stand
     }
-    stands.push({ x: msx, y: msy, w: mW, h: mH, rows: 3, dots: mDots, a: 0.5 });
 
-    // ── Greenery patches (outside the track) ─────────────────────────────
+    // Two stands flanking the start gate (one each side, whichever side is clear)
+    for (let side = -1; side <= 1; side += 2) {
+        const standW = 50 + prng.float(-6, 6);
+        const standH = 20 + prng.float(-3, 3);
+        const s = placeStandNear(GATE_X, GATE_Y, gnx * side, gny * side, standW, standH, 4, 0.75);
+        if (s) stands.push(s);
+    }
+
+    // 3 extra small stands spread around the track at different arc positions
+    const standSpots = [0.22, 0.48, 0.74];
+    for (const frac of standSpots) {
+        const idx  = Math.floor(frac * SAMPLES);
+        const pt   = pts[idx];
+        const ptB  = pts[(idx + 4) % SAMPLES];
+        const tdx  = ptB.x - pt.x, tdy = ptB.y - pt.y;
+        const tlen = Math.hypot(tdx, tdy) || 1;
+        const tnx  = -tdy / tlen, tny = tdx / tlen;
+        const side = prng.pick([-1, 1]);
+        const s = placeStandNear(pt.x, pt.y, tnx * side, tny * side, 36, 14, 3, 0.55);
+        if (s) stands.push(s);
+    }
+
+    // ── Greenery patches (outside the track, collision-checked) ────────────
     const greenery = [];
     const GREEN_SHADES = ['#1a3320','#1c3d22','#153318','#204030','#172d1c'];
     const BRIGHT_GREEN = ['#2a5530','#234d28','#1e4425'];
-    // Sample ~20 points around track, offset outward
-    for (let i = 0; i < 20; i++) {
-        const idx = Math.floor((i / 20) * SAMPLES);
+
+    function standsOverlap(x, y, r) {
+        for (const s of stands) {
+            if (x + r > s.x - 4 && x - r < s.x + s.w + 4 &&
+                y + r > s.y - 4 && y - r < s.y + s.h + 4) return true;
+        }
+        return false;
+    }
+
+    let placed = 0, attempts = 0;
+    while (placed < 26 && attempts < 400) {
+        attempts++;
+        const idx = Math.floor(prng.float(0, SAMPLES));
         const pt  = pts[idx];
         const ptB = pts[(idx + 5) % SAMPLES];
         const tdx = ptB.x - pt.x, tdy = ptB.y - pt.y;
         const tlen = Math.hypot(tdx, tdy) || 1;
         const tnx = -tdy / tlen, tny = tdx / tlen;
         const side = prng.pick([-1, 1]);
-        const dist  = prng.float(24, 45);
-        const gx = pt.x + tnx * side * dist + prng.float(-8, 8);
-        const gy = pt.y + tny * side * dist + prng.float(-8, 8);
-        // Make sure not out of bounds
-        if (gx < 4 || gx > canvas.width - 4 || gy < 4 || gy > canvas.height - 4) continue;
-        const r = prng.float(8, 20);
+        const dist = prng.float(TRACK_HALF_WIDTH + 14, TRACK_HALF_WIDTH + 50);
+        const gx = pt.x + tnx * side * dist + prng.float(-6, 6);
+        const gy = pt.y + tny * side * dist + prng.float(-6, 6);
+        const r  = prng.float(7, 16);
+
+        if (gx - r < 2 || gx + r > W - 2 || gy - r < 2 || gy + r > H - 2) continue;
+        if (distToTrack(gx, gy) < TRACK_HALF_WIDTH + r) continue;   // would overlap track
+        if (standsOverlap(gx, gy, r)) continue;                     // would overlap a stand
+        // avoid stacking trees directly on each other
+        if (greenery.some(g => Math.hypot(g.x - gx, g.y - gy) < (g.r + r) * 0.7)) continue;
+
         greenery.push({
             x: gx, y: gy, r,
             color: prng.chance(0.3) ? prng.pick(BRIGHT_GREEN) : prng.pick(GREEN_SHADES),
-            a: prng.float(0.5, 0.9),
+            a: prng.float(0.5, 0.85),
         });
+        placed++;
     }
 
-    // Legacy crowd (kept for compatibility)
-    const crowd = [];
+    const crowd = []; // legacy, unused
 
     return {
         ctrl, pts, arcTable, curvTable, totalLen,
@@ -621,8 +675,8 @@ let isReplay      = false;
 function initCanvas() {
     canvas = document.getElementById('wb-canvas');
     const shell = document.querySelector('.wb-shell');
-    const H = Math.min(window.innerHeight - 80, 520);
-    const W = Math.min(shell?.offsetWidth || 860, 860);
+    const H = Math.min(window.innerHeight - 120, 680);
+    const W = Math.min(shell?.offsetWidth || 1100, 1100);
     canvas.width  = W;
     canvas.height = H;
     ctx = canvas.getContext('2d');

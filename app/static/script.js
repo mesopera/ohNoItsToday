@@ -214,21 +214,44 @@ const PREVIEW = [
     { l: 'E', s: 'present' },
 ];
 
-// We Ball — colors match weball.js constants
+// We Ball racer colors — must match weball.js
 const WB_DOT_COLORS = { Red:'#e05547', Blue:'#4d8fe0', Green:'#4cba6a', Yellow:'#d4b84a', Purple:'#8c5ce0' };
-const WB_DOT_NAMES  = ['Red','Blue','Green','Yellow','Purple'];
+const WB_DOT_NAMES  = ['Red', 'Blue', 'Green', 'Yellow', 'Purple'];
 
 function readWeballToday() {
     try {
         const raw = localStorage.getItem('wb_today');
         if (!raw) return null;
         const t = JSON.parse(raw);
-        return (t && t.date === new Date().toISOString().slice(0,10)) ? t : null;
+        return (t && t.date === new Date().toISOString().slice(0, 10)) ? t : null;
     } catch { return null; }
 }
+
 function readWeballBalance() {
     try { return JSON.parse(localStorage.getItem('wb_player'))?.balance ?? 50; }
     catch { return 50; }
+}
+
+function wbDotsHTML(entry) {
+    // If we have a race result, show finishing order with DNFs dimmed
+    if (entry?.finishingOrder?.length) {
+        const dnfs = new Set(entry.dnfs || []);
+        return entry.finishingOrder.map(n =>
+            `<div class="wb-dash-dot" style="background:${WB_DOT_COLORS[n]};opacity:${dnfs.has(n) ? 0.3 : 1}"></div>`
+        ).join('');
+    }
+    // Default: static color order
+    return WB_DOT_NAMES.map(n =>
+        `<div class="wb-dash-dot" style="background:${WB_DOT_COLORS[n]}"></div>`
+    ).join('');
+}
+
+function wbStatusHTML(entry) {
+    if (!entry) return `<span class="wordle-status-pending">— not raced yet</span>`;
+    const bet = entry.playerBet;
+    if (bet?.result === 'win')  return `<span class="quest-status done">✓ won +⬡${bet.payout - bet.wager}</span>`;
+    if (bet?.result === 'lose') return `<span class="wordle-status-failed">✗ lost ⬡${bet.wager}</span>`;
+    return `<span class="wordle-status-pending">— watched</span>`;
 }
 
 function renderPuzzles(dateStr, wordle) {
@@ -236,38 +259,22 @@ function renderPuzzles(dateStr, wordle) {
     if (!el) return;
 
     // ── Wordle ──
-    const num    = wordle.number || calcWordleNumber(dateStr);
+    const num     = wordle.number || calcWordleNumber(dateStr);
     const wstatus = wordle.status || 'pending';
-    const tiles = PREVIEW.map(p => `<div class="wp-tile wp-tile--${p.s}">${p.l}</div>`).join('');
-    let wordleStatusHTML;
+    const tiles   = PREVIEW.map(p => `<div class="wp-tile wp-tile--${p.s}">${p.l}</div>`).join('');
+    let wordleStatus;
     if (wstatus === 'solved') {
-        wordleStatusHTML = `<span class="quest-status done">✓ solved ${wordle.attempts}/6</span>`;
+        wordleStatus = `<span class="quest-status done">✓ solved ${wordle.attempts}/6</span>`;
     } else if (wstatus === 'failed') {
         const ans = wordle.solution ? ` — ${wordle.solution}` : '';
-        wordleStatusHTML = `<span class="wordle-status-failed">✗ not today${esc(ans)}</span>`;
+        wordleStatus = `<span class="wordle-status-failed">✗ not today${esc(ans)}</span>`;
     } else {
-        wordleStatusHTML = `<span class="wordle-status-pending">— not played yet</span>`;
+        wordleStatus = `<span class="wordle-status-pending">— not played yet</span>`;
     }
 
     // ── We Ball ──
-    const wb      = readWeballToday();
-    const wbBal   = readWeballBalance();
-    const wbDots  = WB_DOT_NAMES.map(n =>
-        `<div class="wb-dash-dot" style="background:${WB_DOT_COLORS[n]}"></div>`
-    ).join('');
-    let wbStatusHTML;
-    if (wb) {
-        const bet = wb.playerBet;
-        if (bet?.result === 'win') {
-            wbStatusHTML = `<span class="quest-status done">✓ won +⬡${bet.payout - bet.wager}</span>`;
-        } else if (bet?.result === 'lose') {
-            wbStatusHTML = `<span class="wordle-status-failed">✗ lost ⬡${bet.wager}</span>`;
-        } else {
-            wbStatusHTML = `<span class="wordle-status-pending">— watched</span>`;
-        }
-    } else {
-        wbStatusHTML = `<span class="wordle-status-pending">— not raced yet</span>`;
-    }
+    const wb    = readWeballToday();
+    const wbBal = readWeballBalance();
 
     el.innerHTML = `
         <div class="puzzle-block">
@@ -278,17 +285,17 @@ function renderPuzzles(dateStr, wordle) {
                         <div class="wp-preview-row">${tiles}</div>
                         <span class="wp-num">#${num}</span>
                     </a>
-                    <div class="wp-status">${wordleStatusHTML}</div>
+                    <div class="wp-status">${wordleStatus}</div>
                 </div>
             </div>
             <div class="puzzle-item">
                 <span class="puzzle-label">we ball</span>
                 <div>
                     <a href="/weball" class="wp-preview-link">
-                        <div class="wb-dash-dots">${wbDots}</div>
+                        <div class="wb-dash-dots">${wbDotsHTML(wb)}</div>
                         <span class="wp-num">⬡ ${wbBal}</span>
                     </a>
-                    <div class="wp-status">${wbStatusHTML}</div>
+                    <div class="wp-status">${wbStatusHTML(wb)}</div>
                 </div>
             </div>
         </div>`;
@@ -347,21 +354,18 @@ async function updateQuest(status) {
         }
     }
 }
-// ── Journal ───────────────────────────────────────────────────────────────
 
+// ── Journal ───────────────────────────────────────────────────────────────────
 const journal = document.getElementById("journal");
 const saveBtn = document.getElementById("save-journal");
 const status = document.getElementById("journal-status");
 
 if (journal) {
-
     let timer;
-
     // Auto expand + autosave
     journal.addEventListener("input", () => {
         journal.style.height = "auto";
         journal.style.height = journal.scrollHeight + "px";
-
         clearTimeout(timer);
         timer = setTimeout(() => saveJournal(false), 1000);
     });
@@ -371,54 +375,34 @@ if (journal) {
         .then(r => r.json())
         .then(data => {
             journal.value = data.journal || "";
-
             journal.style.height = "auto";
             journal.style.height = journal.scrollHeight + "px";
         })
         .catch(err => console.error("Failed to load journal:", err));
 
     async function saveJournal(showMessage = false) {
-
         try {
             const resp = await fetch("/api/journal", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    journal: journal.value
-                })
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ journal: journal.value })
             });
-
             if (!resp.ok) return;
-
-            // Only show feedback for manual saves
             if (showMessage && status) {
                 status.textContent = "✓ Saved";
-
                 clearTimeout(status._timer);
-
-                status._timer = setTimeout(() => {
-                    status.textContent = "";
-                }, 1200);
+                status._timer = setTimeout(() => { status.textContent = ""; }, 1200);
             }
-
         } catch (err) {
             console.error("Failed to save journal:", err);
-
             if (showMessage && status) {
                 status.textContent = "✗ Failed";
-
                 clearTimeout(status._timer);
-
-                status._timer = setTimeout(() => {
-                    status.textContent = "";
-                }, 1500);
+                status._timer = setTimeout(() => { status.textContent = ""; }, 1500);
             }
         }
     }
 
-    // Manual save button
     if (saveBtn) {
         saveBtn.addEventListener("click", () => saveJournal(true));
     }
@@ -482,6 +466,15 @@ async function loadHistoryDay(dateStr) {
         weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
     });
 
+    // We Ball: prefer server-synced data, fall back to localStorage archive
+    const wbEntry = (() => {
+        if (data.weball?.date) return data.weball;
+        try {
+            const arc = JSON.parse(localStorage.getItem('wb_archive') || '[]');
+            return arc.find(e => e.date === dateStr) || null;
+        } catch { return null; }
+    })();
+
     detail.innerHTML = `
         <div style="margin-top:40px;padding-top:24px;border-top:1px solid var(--border)">
             <p class="section-heading">${label}</p>
@@ -489,22 +482,18 @@ async function loadHistoryDay(dateStr) {
             ${hSection('Weather', hWeather(data.weather||{}))}
             ${hSection('Quote', hQuote(data.quote||{}))}
             ${hSection('Watch', hMovies(data.movie_rec||{}, data.show_rec||{}))}
-            ${hSection('Puzzles', hPuzzles(data.date, data.wordle || {}))}
+            ${hSection('Puzzles', hPuzzles(data.date, data.wordle||{}, wbEntry))}
             ${hSection('Side Quest', hQuest(data.sidequest||{}))}
             ${hSection('Journal', hJournal(data.journal))}
         </div>`;
 }
 
 function hJournal(text) {
-
-    if (!text)
-        return '<p class="error-msg">> no journal entry.</p>';
-
+    if (!text) return '<p class="error-msg">> no journal entry.</p>';
     return `
         <div class="quote-block">
             <p class="quote-text">${esc(text)}</p>
-        </div>
-    `;
+        </div>`;
 }
 
 // History sub-renderers (read-only, no quest actions)
@@ -569,21 +558,26 @@ function hQuest(q) {
     </div>`;
 }
 
-function hPuzzles(dateStr, wordle) {
-    wordle = wordle || {};
-    const num    = wordle.number || calcWordleNumber(dateStr);
-    const status = wordle.status || 'pending';
-    const tiles  = PREVIEW.map(p => `<div class="wp-tile wp-tile--${p.s}">${p.l}</div>`).join('');
+function hPuzzles(dateStr, wordle, wbEntry) {
+    wordle  = wordle  || {};
+    wbEntry = wbEntry || null;
 
-    let statusHTML;
-    if (status === 'solved') {
-        statusHTML = `<span class="quest-status done">✓ solved ${wordle.attempts}/6</span>`;
-    } else if (status === 'failed') {
+    // ── Wordle ──
+    const num     = wordle.number || calcWordleNumber(dateStr);
+    const wstatus = wordle.status || 'pending';
+    const tiles   = PREVIEW.map(p => `<div class="wp-tile wp-tile--${p.s}">${p.l}</div>`).join('');
+    let wordleStatus;
+    if (wstatus === 'solved') {
+        wordleStatus = `<span class="quest-status done">✓ solved ${wordle.attempts}/6</span>`;
+    } else if (wstatus === 'failed') {
         const ans = wordle.solution ? ` — ${wordle.solution}` : '';
-        statusHTML = `<span class="wordle-status-failed">✗ not today${esc(ans)}</span>`;
+        wordleStatus = `<span class="wordle-status-failed">✗ not today${esc(ans)}</span>`;
     } else {
-        statusHTML = `<span class="wordle-status-pending">— not played</span>`;
+        wordleStatus = `<span class="wordle-status-pending">— not played</span>`;
     }
+
+    // ── We Ball ──
+    const wbLink = wbEntry ? `/weball?replay=${wbEntry.date || dateStr}` : '/weball';
 
     return `
         <div class="puzzle-block">
@@ -592,7 +586,16 @@ function hPuzzles(dateStr, wordle) {
                 <div>
                     <div class="wp-preview-row" style="margin-bottom:6px">${tiles}</div>
                     <span class="wp-num">#${num}</span>
-                    <div class="wp-status">${statusHTML}</div>
+                    <div class="wp-status">${wordleStatus}</div>
+                </div>
+            </div>
+            <div class="puzzle-item">
+                <span class="puzzle-label">we ball</span>
+                <div>
+                    <a href="${wbLink}" class="wp-preview-link">
+                        <div class="wb-dash-dots" style="margin-bottom:4px">${wbDotsHTML(wbEntry)}</div>
+                    </a>
+                    <div class="wp-status">${wbStatusHTML(wbEntry)}</div>
                 </div>
             </div>
         </div>`;
