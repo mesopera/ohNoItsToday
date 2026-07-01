@@ -13,22 +13,45 @@ from app.modules.wordle import fetch_wordle_word
 from app.modules.cache import update_wordle_status
 from datetime import datetime
 import threading
+import random
 
 app = Flask(__name__)
 _generation_lock = threading.Lock()
 _is_generating = False
 
+GRASS_CHANCE = 60
+GRASS_MESSAGES = [
+    "FUCK OFF AND GO TOUCH SOME GRASS.",
+    "NO.",
+    "STOP JORKING YOURSELF AND GO TOUCH GRASS FFS.",
+    "YOU'VE HAD ENOUGH SCREEN TIME.",
+    "TODAY IS CANCELLED.",
+    "COME BACK AFTER A WALK.",
+    "CALL YOUR MUM .",
+    "THE SUN MISSES YOU.",
+    "GO LOOK AT A TREE.",
+    "404: OUTSIDE NOT FOUND.",
+]
 
 # ── Pages ────────────────────────────────────────────────────────────────────
 
-@app.route('/')
+@app.route("/")
 def index():
     config = get_config()
+
     if config is None:
-        return redirect(url_for('settings'))
-    if not config.get('groq', {}).get('api_key'):
-        return redirect(url_for('settings'))
-    return render_template('index.html')
+        return redirect(url_for("settings"))
+
+    if not config.get("groq", {}).get("api_key"):
+        return redirect(url_for("settings"))
+
+    if random.randint(1, GRASS_CHANCE) == 1:
+        return render_template(
+            "grass.html",
+            message=random.choice(GRASS_MESSAGES),
+        )
+
+    return render_template("index.html")
 
 
 @app.route('/settings')
